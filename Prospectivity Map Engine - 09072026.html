@@ -274,6 +274,34 @@
   .modal-tools { display:flex; align-items:center; gap:8px; padding:8px 16px; border-bottom:1px solid var(--border-soft); }
   .modal-body { overflow:auto; padding:0; }
   .modal-body table.rank td { white-space:normal; }
+
+  /* role badge + admin chip */
+  .rolebadge { display:inline-block; padding:1px 7px; border-radius:20px; font-size:10.5px; font-weight:700;
+    background:#eef1f5; color:#5c6672; border:1px solid var(--border); }
+  .rolebadge.adm { background:var(--accent-soft); color:#8a6414; border-color:var(--accent); }
+  #userChip.admin { background:#e9f2ff; border-color:#3f5a86; color:#1f2a44; }
+  .btn.danger { color:var(--danger); border-color:#e8c4bf; }
+  .btn.danger:hover { background:#fdeeec; border-color:var(--danger); }
+  .usr-form { display:grid; grid-template-columns:1fr 1fr 1fr 110px auto; gap:8px; align-items:end;
+    padding:12px 16px; border-bottom:1px solid var(--border-soft); background:var(--panel2); }
+  #usrErr { color:var(--danger); font-size:11px; padding:0 16px 8px; }
+
+  /* autosave chip + restore bar */
+  #autosaveChip { display:none; font-size:11px; color:var(--ok); padding:3px 9px; border-radius:6px;
+    background:#eef7f0; border:1px solid #bfe3cc; white-space:nowrap; }
+  #autosaveChip.warn { color:var(--danger); background:#fdeeec; border-color:#e8c4bf; }
+  #restoreBar { display:none; align-items:center; gap:10px; padding:8px 14px; background:#fff8e6;
+    border-bottom:1px solid var(--accent); font-size:12px; color:#6b4e13; }
+  #restoreBar.on { display:flex; }
+  #drawNote { display:none; font-size:11px; color:#8a6414; background:#fbf3e3; border:1px solid #e4d3a8;
+    border-radius:6px; padding:4px 9px; margin:6px 0 0; }
+
+  /* attribute table modal */
+  .attrtbl { width:100%; border-collapse:collapse; font-size:11.5px; }
+  .attrtbl th { position:sticky; top:0; background:var(--panel2); border-bottom:1px solid var(--border);
+    padding:7px 9px; text-align:left; font-size:10.5px; letter-spacing:0.05em; text-transform:uppercase; color:var(--dim); }
+  .attrtbl td { padding:5px 9px; border-bottom:1px solid var(--border-soft); font-family:var(--mono); }
+  .attrtbl tr:hover td { background:var(--accent-soft); cursor:pointer; }
 </style>
 </head>
 <body>
@@ -287,7 +315,7 @@
     </div>
     <div class="brand-div"></div>
     <div class="brand-txt">
-      <h1>PROSPECTIVITY MAP ENGINE</h1>
+      <h1>PROSPECTIVITY MAP ENGINE <span style="color:var(--accent);font-weight:700">MIND ID 2026</span></h1>
       <p>Mineral System Approach · GeoTIFF · Shapefile · CSV · KML/KMZ · weighted overlay &amp; fuzzy logic · sensitivitas · ranking · WGS84</p>
     </div>
   </div>
@@ -317,8 +345,17 @@
   <button class="btn accent" id="btnCompute">▶ Hitung Prospektivitas</button>
   <div class="brand-div"></div>
   <button class="btn" id="btnActivity" title="Lihat log aktivitas sesi">🕑 Aktivitas</button>
+  <button class="btn" id="btnUsers" style="display:none" title="Kelola pengguna (admin)">👥 Pengguna</button>
+  <span id="autosaveChip" title="Autosave otomatis tiap 30 detik">💾</span>
   <div id="userChip" title="Pengguna aktif"><span id="userName">—</span><button class="btn ghost" id="btnLogout" title="Keluar">⏻</button></div>
 </header>
+
+<div id="restoreBar">
+  <span>💾 Ditemukan sesi tersimpan otomatis dari <b id="restoreWhen">—</b> — <span id="restoreInfo"></span></span>
+  <span class="spacer" style="flex:1"></span>
+  <button class="btn small accent" id="btnRestoreYes">Pulihkan sesi</button>
+  <button class="btn small" id="btnRestoreNo">Mulai baru</button>
+</div>
 
 <div id="helpStrip">
   <b>Format input per parameter:</b>
@@ -447,6 +484,9 @@
       </div>
       <div class="tgroup">
         <button class="btn small" id="btnMeasure" title="Ukur jarak: klik titik-titik di peta, klik ganda untuk selesai">📏 Ukur jarak</button>
+        <button class="btn small" id="btnArea" title="Ukur luas: klik untuk membentuk poligon, klik ganda untuk selesai">⬟ Ukur luas</button>
+        <button class="btn small" id="btnGoto" title="Zoom ke koordinat lat, lon">🎯 Ke koordinat</button>
+        <button class="btn small" id="btnSaveMap" title="Simpan peta skor sebagai PNG">🖼 Simpan PNG</button>
         <button class="btn small" id="btnCollapseSide" title="Sembunyikan/tampilkan panel kiri">⇤ Panel</button>
         <button class="btn small" id="btnFullscreen" title="Perbesar peta ke layar penuh (Esc untuk keluar)">⛶ Layar penuh</button>
       </div>
@@ -461,7 +501,8 @@
       <div id="mapEmpty">Atur AOI &amp; parameter di panel kiri, lalu klik<br /><b style="color:var(--accent)">Hitung Prospektivitas</b></div>
     </div>
 
-    <div id="inspector"><span>—</span></div>
+    <div id="drawNote"></div>
+      <div id="inspector"><span>—</span></div>
 
     <div id="rankPanel" class="collapsed">
       <div id="rankHead">
@@ -507,7 +548,7 @@
     <div class="auth-logos">
       <img id="authLogoMind" alt="MIND ID" /><span class="sep"></span><img id="authLogoDan" alt="Danantara Indonesia" />
     </div>
-    <h2>Prospectivity Map Engine</h2>
+    <h2>Prospectivity Map Engine<br/><span style="color:var(--accent);font-size:13px">MIND ID 2026</span></h2>
     <p class="auth-sub">Masuk untuk memulai sesi analisis</p>
     <label class="label">Nama pengguna</label>
     <input class="input" id="authUser" autocomplete="username" placeholder="mis. josua" />
@@ -1644,6 +1685,7 @@ function initMap() {
   map.on("mousemove", function (e) {
     $("cursorPos").textContent = "lat " + fmt(e.latlng.lat, 5) + ", lon " + fmt(e.latlng.lng, 5);
     if (drawing) { onDrawMove(e); return; }
+    if (areaMode) { if (areaPts.length) drawAreaPreview(areaPts.concat([e.latlng])); return; }
     if (measuring) { onMeasureMove(e); return; }
     var hit = findDataAtLatLng(e.latlng);
     var mapEl = $("map");
@@ -1764,6 +1806,7 @@ function onMeasureDblClick(e) {
 /* ---------- unified map click (measure / identify / pin) ---------- */
 function onMapClick(e) {
   if (drawing) return;
+  if (areaMode) { addAreaPoint(e.latlng); return; }
   if (measuring) { addMeasurePoint(e.latlng); return; }
   // 1) uploaded-data detail takes priority (geochem point, fault line, litho polygon, …)
   var hit = findDataAtLatLng(e.latlng);
@@ -1799,7 +1842,7 @@ function showIdentify(ll, cellSel) {
     "<tr><td>lat, lon</td><td>" + fmt(cen.lat, 5) + ", " + fmt(cen.lon, 5) + "</td></tr>" +
     "</table>";
   if (identifyPopup) map.closePopup(identifyPopup);
-  identifyPopup = L.popup({ maxWidth: 260, className: "identify-pop" }).setLatLng(ll).setContent(html).openOn(map);
+  identifyPopup = L.popup({ maxWidth: 260, className: "identify-pop", autoClose: false, closeOnClick: false, autoPan: false }).setLatLng(ll).setContent(html).openOn(map);
 }
 
 /* ---------- interactive inspection of UPLOADED data (points/lines/polygons) ---------- */
@@ -1886,7 +1929,7 @@ function showDataPopup(ll, hit) {
     (keys.length > 18 ? "<tr><td colspan='2' style='color:var(--faint)'>+" + (keys.length - 18) + " atribut lain</td></tr>" : "") +
     "</table>";
   if (identifyPopup) map.closePopup(identifyPopup);
-  identifyPopup = L.popup({ maxWidth: 300, className: "data-pop" }).setLatLng([hit.lat, hit.lon]).setContent(html).openOn(map);
+  identifyPopup = L.popup({ maxWidth: 300, className: "data-pop", autoClose: false, closeOnClick: false, autoPan: false }).setLatLng([hit.lat, hit.lon]).setContent(html).openOn(map);
 }
 
 /* ---------- score overlay ---------- */
@@ -1919,22 +1962,35 @@ function updateOverlay() {
 }
 
 /* ---------- vector layers (per parameter) ---------- */
+/* Display caps: scoring always uses ALL data, but the map only draws a bounded
+   number of objects — drawing 100k+ Leaflet layers exhausts browser memory. */
+var MAX_DRAW_POINTS = 6000, MAX_DRAW_FEATURES = 4000;
+var _drawNotes = [];
 function rebuildVectorLayers() {
   Object.keys(vectorGroups).forEach(function (k) { map.removeLayer(vectorGroups[k]); });
   vectorGroups = {};
+  _drawNotes = [];
   S.params.forEach(function (p) {
     if (!p.enabled || !p.showPoints) return;
     var grp = L.layerGroup();
     var drew = false;
     if (p.dataType === "points" && p.points && p.points.length) {
-      var rad = p.points.length > 800 ? 1.6 : 3.2;
-      p.points.forEach(function (q) {
+      var n = p.points.length;
+      var step = n > MAX_DRAW_POINTS ? Math.ceil(n / MAX_DRAW_POINTS) : 1;
+      if (step > 1) _drawNotes.push(p.name + ": menampilkan " + fmtInt(Math.floor(n / step)) + " dari " + fmtInt(n) + " titik (skoring tetap pakai semua)");
+      var rad = n > 800 ? 1.6 : 3.2;
+      for (var i = 0; i < n; i += step) {
+        var q = p.points[i];
         L.circleMarker([q[1], q[0]], { renderer: canvasRenderer, radius: rad,
           color: "rgba(0,0,0,0.65)", weight: 1, fillColor: p.color, fillOpacity: 0.9, interactive: false }).addTo(grp);
-      });
+      }
       drew = true;
     } else if (p.features && p.features.length) {
+      if (p.features.length > MAX_DRAW_FEATURES) _drawNotes.push(p.name + ": menampilkan " + fmtInt(MAX_DRAW_FEATURES) + " dari " + fmtInt(p.features.length) + " fitur");
+      p.features = p.features; // keep full data for scoring
+      var shown = 0;
       p.features.forEach(function (f) {
+        if (shown++ >= MAX_DRAW_FEATURES) return;
         var gm = f.geom;
         if (gm.type === "Point") L.circleMarker([gm.coords[1], gm.coords[0]], { renderer: canvasRenderer, radius: 3, color: "rgba(0,0,0,0.6)", weight: 1, fillColor: p.color, fillOpacity: 0.9, interactive: false }).addTo(grp);
         else if (gm.type === "MultiPoint") gm.coords.forEach(function (c) { L.circleMarker([c[1], c[0]], { renderer: canvasRenderer, radius: 3, color: "rgba(0,0,0,0.6)", weight: 1, fillColor: p.color, fillOpacity: 0.9, interactive: false }).addTo(grp); });
@@ -1945,6 +2001,11 @@ function rebuildVectorLayers() {
     }
     if (drew) { grp.addTo(map); vectorGroups[p.id] = grp; }
   });
+  var dn = $("drawNote");
+  if (dn) {
+    if (_drawNotes.length) { dn.style.display = ""; dn.textContent = "⚡ " + _drawNotes.join(" · "); }
+    else dn.style.display = "none";
+  }
 }
 
 /* ---------- targets on map ---------- */
@@ -2167,10 +2228,39 @@ function paramCardHTML(p) {
       "</div>" +
       "<div class='pdata'>" +
         "<button class='btn small' data-act='upload'>⭱ Muat data</button>" +
-        "<button class='btn small' data-act='url' title='Muat GeoJSON/WFS dari URL (interop QGIS)'>🌐 URL</button>" + dataLine + "</div>" +
+        "<button class='btn small' data-act='url' title='Muat GeoJSON/WFS dari URL (interop QGIS)'>🌐 URL</button>" +
+        "<button class='btn small' data-act='attr' title='Buka tabel atribut (seperti QGIS)'>▦ Tabel</button>" + dataLine + "</div>" +
     "</div>";
 }
+var _renderPending = false;
+function paramsPanelBusy() {
+  var a = document.activeElement;
+  if (!a) return false;
+  var host = $("paramsList");
+  if (!host || !host.contains(a)) return false;
+  return /^(SELECT|INPUT|TEXTAREA)$/.test(a.tagName);
+}
 function renderParams() {
+  // Defer re-render if the user is interacting with a control (an open <select>
+  // popup would otherwise be destroyed before they can pick an option).
+  if (paramsPanelBusy()) {
+    if (!_renderPending) {
+      _renderPending = true;
+      var host = $("paramsList");
+      var onDone = function () {
+        host.removeEventListener("focusout", onDone);
+        host.removeEventListener("change", onDone);
+        setTimeout(function () { _renderPending = false; renderParams(); }, 60);
+      };
+      host.addEventListener("focusout", onDone);
+      host.addEventListener("change", onDone);
+    }
+    return;
+  }
+  _renderPending = false;
+  return renderParamsNow();
+}
+function renderParamsNow() {
   $("paramCount").textContent = S.params.length;
   $("paramsEmpty").style.display = S.params.length ? "none" : "block";
   $("paramsList").innerHTML = S.params.map(paramCardHTML).join("");
@@ -2218,6 +2308,7 @@ function onParamsEvent(e) {
   else if (act === "showpts") { p.showPoints = e.target.checked; rebuildVectorLayers(); renderLayerPanel(); }
   else if (act === "upload") { uploadTargetId = p.id; $("fileInput").click(); }
   else if (act === "url") { loadFromURL(p); }
+  else if (act === "attr") { openAttrTable(p); }
   else if (act === "clear") { p.points = []; p.features = []; p.raster = null; p.hasValue = false; p.fields = []; p.valueField = null; p.fileName = ""; p.attrs = null; renderParams(); rebuildVectorLayers(); }
 }
 function parseBreaksText(text) {
@@ -2546,6 +2637,7 @@ async function handleFiles(fileList) {
     setStatus("Gagal memuat file: " + err.message, "err");
   }
   logAudit("load-data", "param '" + (p.name || "?") + "' ← " + files.map(function (f) { return f.name; }).join(", "));
+  markDirty(); doAutosave("muat data");
 }
 
 function fitDataExtent() {
@@ -2686,6 +2778,7 @@ function runCompute() {
         $("metaInfo").textContent = fmtInt(g.count) + " blok · " + fmtInt(g.cell) + " m · " + res.used.length + " parameter · " + COMBINE_LABELS[S.method] + " · " + fmt(res.timeMs, 0) + " ms";
         var skip = res.skipped.length ? " Dilewati: " + res.skipped.map(function (s2) { return esc(s2.name) + " (" + s2.reason + ")"; }).join("; ") + "." : "";
         setStatus("Selesai — " + fmtInt(g.count) + " blok, " + res.used.length + " parameter, " + S.targets.length + " area prospek." + skip, res.skipped.length ? "warn" : "ok");
+        markDirty();
         logAudit("compute", COMBINE_LABELS[S.method] + " · " + fmtInt(g.count) + " blok · " + res.used.length + " parameter · " + S.targets.length + " target");
       }
     } catch (err) { setStatus("Gagal menghitung: " + err.message, "err"); }
@@ -3105,14 +3198,36 @@ function loadDemo(autoCompute) {
    gates the UI and attributes actions to a named user. Tamper-proof,
    multi-user audit requires a server backend.
    ===================================================================== */
-// User list with SALTED SHA-256 password hashes (no plaintext in the file).
-// To add/change a user, run pmeMakeUser("username","password") in the browser
-// console and paste the printed line here.
-var AUTH_USERS = [
-  { user: "admin", salt: "18777692a54691e6", hash: "6a55b05e6564173ddade19907fe97000aab32b76a40ee89530c5b0459c8a3abf", name: "Administrator" },
-  { user: "josua", salt: "5cf673d5aa9d265b", hash: "7ec19e01285054b11055fee4cb939638b535a6e0fdab103a34bb1c4e4b1b5e8e", name: "Josua W. Sihotang" },
-  { user: "ers", salt: "4ce4fc116a2cdfba", hash: "05211f13b2c9928158686bd67f8d59a7b272d26f9cdba8774abf9f7a2fc909a3", name: "ERS Division" },
+// Seed accounts (salted SHA-256 hashes — no plaintext). Roles: "admin" | "user".
+// Admins can add/remove/reset users at runtime; the live list is kept in
+// localStorage (key pme_users_v1) so changes persist per browser.
+var SEED_USERS = [
+  { user: "admin", salt: "18777692a54691e6", hash: "6a55b05e6564173ddade19907fe97000aab32b76a40ee89530c5b0459c8a3abf", name: "Administrator", role: "admin" },
+  { user: "josua", salt: "5cf673d5aa9d265b", hash: "7ec19e01285054b11055fee4cb939638b535a6e0fdab103a34bb1c4e4b1b5e8e", name: "Josua W. Sihotang", role: "admin" },
+  { user: "ers", salt: "4ce4fc116a2cdfba", hash: "05211f13b2c9928158686bd67f8d59a7b272d26f9cdba8774abf9f7a2fc909a3", name: "ERS Division", role: "user" },
 ];
+var USERS_KEY = "pme_users_v1";
+var _memUsers = null;
+function usersLoad() {
+  if (_lsOK) {
+    try {
+      var raw = window.localStorage.getItem(USERS_KEY);
+      if (raw) { var a = JSON.parse(raw); if (Array.isArray(a) && a.length) return a; }
+    } catch (e) {}
+  }
+  return _memUsers || SEED_USERS.slice();
+}
+function usersSave(list) {
+  _memUsers = list;
+  if (_lsOK) { try { window.localStorage.setItem(USERS_KEY, JSON.stringify(list)); } catch (e) {} }
+}
+function isAdmin() { return !!(S.session && S.session.role === "admin"); }
+function requireAdmin() {
+  if (!isAdmin()) { setStatus("Aksi ini hanya untuk admin.", "err"); return false; }
+  return true;
+}
+// backwards-compat alias used by login
+function AUTH_USERS_current() { return usersLoad(); }
 var _cryptoObj = (typeof window !== "undefined" && window.crypto) ? window.crypto : (typeof crypto !== "undefined" ? crypto : null);
 async function sha256hex(str) {
   var buf = await _cryptoObj.subtle.digest("SHA-256", new TextEncoder().encode(str));
@@ -3147,14 +3262,17 @@ function logAudit(action, detail) {
 
 async function doLogin() {
   var u = $("authUser").value.trim(), p = $("authPass").value;
-  var rec = AUTH_USERS.find(function (a) { return a.user.toLowerCase() === u.toLowerCase(); });
+  var rec = usersLoad().find(function (a) { return a.user.toLowerCase() === u.toLowerCase(); });
   var okPass = false;
   if (rec) {
     try { okPass = (await sha256hex(rec.salt + ":" + p)) === rec.hash; }
     catch (e) { $("authErr").textContent = "Web Crypto tidak tersedia (buka lewat https:// atau http://localhost)."; return; }
   }
   if (!rec || !okPass) { $("authErr").textContent = "Nama pengguna atau kata sandi salah."; return; }
-  S.session = { user: rec.user, name: rec.name || rec.user, loginAt: new Date().toISOString(), pass: p };
+  S.session = { user: rec.user, name: rec.name || rec.user, role: rec.role || "user", loginAt: new Date().toISOString() };
+  $("userChip").classList.toggle("admin", S.session.role === "admin");
+  $("btnUsers").style.display = S.session.role === "admin" ? "" : "none";
+  $("actClear").style.display = S.session.role === "admin" ? "" : "none";
   $("authErr").textContent = "";
   $("authPass").value = "";
   $("authOverlay").classList.add("hidden");
@@ -3162,7 +3280,8 @@ async function doLogin() {
   resetIdleTimer();
   logAudit("login", "sesi dimulai" + (_lsOK ? "" : " (log sesi-saja: localStorage tak tersedia)"));
   setStatus("Selamat datang, " + (rec.name || rec.user) + ". Sesi analisis dimulai.", "ok");
-  if (!S.result) setTimeout(function () { runCompute(); }, 300); // initial demo compute after login
+  var restorable = offerRestore();   // shows the restore bar if an autosave exists
+  if (!restorable && !S.result) setTimeout(function () { runCompute(); }, 300);
 }
 // ---- session inactivity auto-logout ----
 var IDLE_MINUTES = 20, _idleTimer = null;
@@ -3176,8 +3295,13 @@ function resetIdleTimer() {
 }
 function doLogout() {
   if (!S.session) return;
+  if (_autosaveDirty) doAutosave("logout");   // never lose work on logout
   logAudit("logout", "sesi diakhiri");
   if (_idleTimer) clearTimeout(_idleTimer);
+  if (_autosaveTimer) { clearInterval(_autosaveTimer); _autosaveTimer = null; }
+  $("btnUsers").style.display = "none";
+  $("autosaveChip").style.display = "none";
+  $("userChip").classList.remove("admin");
   S.session = null;
   $("userName").textContent = "—";
   $("authUser").value = "";
@@ -3202,8 +3326,176 @@ function exportActivityCsv() {
   logAudit("export", "log aktivitas CSV");
 }
 function clearActivity() {
+  if (!requireAdmin()) return;
   if (!window.confirm("Hapus seluruh log aktivitas di browser ini? Tindakan ini permanen.")) return;
   auditSave([]); _memAudit = []; renderActivity();
+  logAudit("audit-clear", "log dibersihkan oleh admin");
+}
+
+/* ===================== USER MANAGEMENT (admin only) ===================== */
+function renderUsers() {
+  var list = usersLoad();
+  $("usrRows").innerHTML = list.map(function (u) {
+    var isSelf = S.session && S.session.user === u.user;
+    return "<tr><td class='mono'>" + esc(u.user) + (isSelf ? " <small style='color:var(--accent)'>(Anda)</small>" : "") + "</td>" +
+      "<td>" + esc(u.name || u.user) + "</td>" +
+      "<td><span class='rolebadge " + (u.role === "admin" ? "adm" : "") + "'>" + (u.role === "admin" ? "Admin" : "User") + "</span></td>" +
+      "<td style='text-align:right;white-space:nowrap'>" +
+        "<button class='btn small' data-uact='role' data-u='" + esc(u.user) + "'>" + (u.role === "admin" ? "Jadikan User" : "Jadikan Admin") + "</button> " +
+        "<button class='btn small' data-uact='pass' data-u='" + esc(u.user) + "'>Reset sandi</button> " +
+        "<button class='btn small danger' data-uact='del' data-u='" + esc(u.user) + "'" + (isSelf ? " disabled title='Tidak bisa menghapus akun sendiri'" : "") + ">Hapus</button>" +
+      "</td></tr>";
+  }).join("");
+  $("usrInfo").textContent = list.length + " akun · " + list.filter(function (u) { return u.role === "admin"; }).length + " admin";
+}
+async function addUser() {
+  if (!requireAdmin()) return;
+  var u = $("newUser").value.trim(), p = $("newPass").value, nm = $("newName").value.trim();
+  var role = $("newRole").value;
+  if (!u || !p) { $("usrErr").textContent = "Nama pengguna dan kata sandi wajib diisi."; return; }
+  if (p.length < 8) { $("usrErr").textContent = "Kata sandi minimal 8 karakter."; return; }
+  var list = usersLoad();
+  if (list.some(function (a) { return a.user.toLowerCase() === u.toLowerCase(); })) {
+    $("usrErr").textContent = "Nama pengguna sudah ada."; return;
+  }
+  var salt = randHex(8), hash = await sha256hex(salt + ":" + p);
+  list.push({ user: u, salt: salt, hash: hash, name: nm || u, role: role });
+  usersSave(list);
+  $("newUser").value = ""; $("newPass").value = ""; $("newName").value = "";
+  $("usrErr").textContent = "";
+  renderUsers();
+  logAudit("user-add", "akun '" + u + "' (" + role + ") dibuat");
+  setStatus("Akun '" + u + "' dibuat.", "ok");
+}
+function delUser(uname) {
+  if (!requireAdmin()) return;
+  if (S.session && S.session.user === uname) { setStatus("Tidak bisa menghapus akun sendiri.", "err"); return; }
+  var list = usersLoad();
+  var target = list.find(function (a) { return a.user === uname; });
+  if (!target) return;
+  if (target.role === "admin" && list.filter(function (a) { return a.role === "admin"; }).length <= 1) {
+    setStatus("Tidak bisa menghapus admin terakhir.", "err"); return;
+  }
+  if (!window.confirm("Hapus akun '" + uname + "'? Tindakan ini permanen.")) return;
+  usersSave(list.filter(function (a) { return a.user !== uname; }));
+  renderUsers();
+  logAudit("user-delete", "akun '" + uname + "' dihapus");
+}
+async function resetUserPass(uname) {
+  if (!requireAdmin()) return;
+  var np = window.prompt("Kata sandi baru untuk '" + uname + "' (min. 8 karakter):");
+  if (!np) return;
+  if (np.length < 8) { setStatus("Kata sandi minimal 8 karakter.", "err"); return; }
+  var list = usersLoad();
+  var rec = list.find(function (a) { return a.user === uname; });
+  if (!rec) return;
+  rec.salt = randHex(8); rec.hash = await sha256hex(rec.salt + ":" + np);
+  usersSave(list); renderUsers();
+  logAudit("user-reset", "kata sandi '" + uname + "' direset");
+  setStatus("Kata sandi '" + uname + "' diperbarui.", "ok");
+}
+function toggleUserRole(uname) {
+  if (!requireAdmin()) return;
+  var list = usersLoad();
+  var rec = list.find(function (a) { return a.user === uname; });
+  if (!rec) return;
+  if (rec.role === "admin" && list.filter(function (a) { return a.role === "admin"; }).length <= 1) {
+    setStatus("Harus ada minimal satu admin.", "err"); return;
+  }
+  rec.role = rec.role === "admin" ? "user" : "admin";
+  usersSave(list); renderUsers();
+  logAudit("user-role", "peran '" + uname + "' → " + rec.role);
+}
+function onUsersClick(e) {
+  var b = e.target.closest("button[data-uact]");
+  if (!b) return;
+  var act = b.dataset.uact, u = b.dataset.u;
+  if (act === "del") delUser(u);
+  else if (act === "pass") resetUserPass(u);
+  else if (act === "role") toggleUserRole(u);
+}
+
+/* ===================== AUTOSAVE / SESSION RECOVERY =====================
+   Periodically snapshots the working session (AOI, grid, parameters, vector
+   data, settings) into localStorage so a crash / accidental close / logout
+   does not lose work. Raster pixel data is NOT stored (too large) — raster
+   params are flagged for re-load. Autosave is per-user. */
+var AUTOSAVE_KEY_PREFIX = "pme_autosave_v1:";
+var AUTOSAVE_SEC = 30;
+var _autosaveTimer = null, _autosaveDirty = false, _lastAutosaveAt = null;
+
+function autosaveKey(user) { return AUTOSAVE_KEY_PREFIX + (user || (S.session ? S.session.user : "-")); }
+function autosaveSizeGuard(json) {
+  // localStorage is typically ~5 MB; refuse oversized snapshots rather than throw
+  return json.length < 4.5e6;
+}
+function doAutosave(reason) {
+  if (!S.session || !_lsOK) return false;
+  try {
+    var payload = projectPayload();
+    payload.autosave = { at: new Date().toISOString(), reason: reason || "berkala" };
+    var json = JSON.stringify(payload);
+    if (!autosaveSizeGuard(json)) {
+      setAutosaveBadge("terlalu besar", true);
+      return false;
+    }
+    window.localStorage.setItem(autosaveKey(), json);
+    _autosaveDirty = false;
+    _lastAutosaveAt = new Date();
+    setAutosaveBadge(_lastAutosaveAt.toLocaleTimeString("id-ID"), false);
+    return true;
+  } catch (e) {
+    setAutosaveBadge("gagal (kuota?)", true);
+    return false;
+  }
+}
+function setAutosaveBadge(txt, warn) {
+  var el = $("autosaveChip");
+  if (!el) return;
+  el.textContent = "💾 " + (warn ? "Autosave: " + txt : "Tersimpan " + txt);
+  el.classList.toggle("warn", !!warn);
+  el.style.display = "";
+}
+function markDirty() { _autosaveDirty = true; }
+function startAutosave() {
+  if (_autosaveTimer) clearInterval(_autosaveTimer);
+  _autosaveTimer = setInterval(function () {
+    if (_autosaveDirty && S.session) doAutosave("berkala");
+  }, AUTOSAVE_SEC * 1000);
+  window.addEventListener("beforeunload", function () { if (S.session && _autosaveDirty) doAutosave("keluar"); });
+}
+function hasAutosave(user) {
+  if (!_lsOK) return null;
+  try {
+    var raw = window.localStorage.getItem(autosaveKey(user));
+    if (!raw) return null;
+    var d = JSON.parse(raw);
+    return d && d.params ? d : null;
+  } catch (e) { return null; }
+}
+function offerRestore() {
+  var snap = hasAutosave();
+  if (!snap) { startAutosave(); return false; }
+  var when = snap.autosave && snap.autosave.at ? new Date(snap.autosave.at).toLocaleString("id-ID") : "sebelumnya";
+  $("restoreWhen").textContent = when;
+  $("restoreInfo").textContent = (snap.params ? snap.params.length : 0) + " parameter · " +
+    (snap.params || []).filter(function (p) { return p.hadRaster; }).length + " raster (perlu dimuat ulang)";
+  $("restoreBar").classList.add("on");
+  startAutosave();
+  return true;
+}
+function acceptRestore() {
+  var snap = hasAutosave();
+  $("restoreBar").classList.remove("on");
+  if (!snap) return;
+  applyProject(snap);
+  logAudit("session-restore", "sesi dipulihkan dari autosave " + (snap.autosave ? snap.autosave.at : ""));
+  setStatus("Sesi terakhir dipulihkan. Parameter raster perlu dimuat ulang (data piksel tak ikut tersimpan).", "ok");
+}
+function discardRestore() {
+  $("restoreBar").classList.remove("on");
+  if (_lsOK) { try { window.localStorage.removeItem(autosaveKey()); } catch (e) {} }
+  setStatus("Autosave sebelumnya dibuang. Mulai sesi baru.", "warn");
 }
 
 /* ===================== ENCRYPTED PROJECT SAVE / LOAD =====================
@@ -3335,6 +3627,156 @@ async function loadFromURL(p) {
   } catch (e) {
     setStatus("Gagal memuat dari URL: " + e.message + ". Periksa URL & kebijakan CORS server (WFS/GeoServer harus mengizinkan lintas-asal).", "err");
   }
+}
+
+/* ===================== QGIS-BENCHMARKED MAP TOOLS ===================== */
+/* Area measurement: spherical excess is overkill at these scales; use an
+   equal-area local projection (equirectangular about the polygon centroid)
+   and the shoelace formula — accurate for regional AOIs. */
+function polygonAreaKm2(latlngs) {
+  if (latlngs.length < 3) return 0;
+  var latc = latlngs.reduce(function (s, p) { return s + p.lat; }, 0) / latlngs.length;
+  var kx = 111320 * Math.cos(latc * Math.PI / 180), ky = 110574;
+  var sum = 0;
+  for (var i = 0, j = latlngs.length - 1; i < latlngs.length; j = i++) {
+    var xi = latlngs[i].lng * kx, yi = latlngs[i].lat * ky;
+    var xj = latlngs[j].lng * kx, yj = latlngs[j].lat * ky;
+    sum += (xj * yi - xi * yj);
+  }
+  return Math.abs(sum / 2) / 1e6;
+}
+var areaMode = false, areaPts = [], areaLayer = null;
+function toggleArea(on) {
+  areaMode = on;
+  $("btnArea").classList.toggle("outline-accent", on);
+  if (measuring && on) toggleMeasure(false);
+  if (!on) { areaPts = []; if (areaLayer) { map.removeLayer(areaLayer); areaLayer = null; } }
+  else setStatus("Ukur luas: klik titik-titik poligon, klik ganda untuk selesai.");
+  $("map").style.cursor = on ? "crosshair" : "";
+}
+function addAreaPoint(ll) {
+  areaPts.push(ll);
+  drawAreaPreview(areaPts.slice());
+}
+function drawAreaPreview(pts) {
+  if (areaLayer) map.removeLayer(areaLayer);
+  if (pts.length < 2) { areaLayer = L.polyline(pts, { color: "#bd8a27", weight: 2, dashArray: "5,4" }).addTo(map); return; }
+  var km2 = polygonAreaKm2(pts);
+  areaLayer = L.layerGroup([
+    L.polygon(pts, { color: "#bd8a27", weight: 2, fillColor: "#bd8a27", fillOpacity: 0.15 }),
+  ]).addTo(map);
+  if (pts.length >= 3) {
+    var c = pts.reduce(function (a, p) { return [a[0] + p.lat / pts.length, a[1] + p.lng / pts.length]; }, [0, 0]);
+    L.marker(c, { icon: L.divIcon({ className: "meas-lbl", html: "<b>" + fmt(km2, 2) + " km²</b><br/><small>" + fmt(km2 * 100, 0) + " ha</small>", iconSize: [90, 30] }), interactive: false }).addTo(areaLayer);
+  }
+}
+function finishArea() {
+  if (areaPts.length >= 3) {
+    var km2 = polygonAreaKm2(areaPts);
+    setStatus("Luas terukur: " + fmt(km2, 3) + " km² (" + fmt(km2 * 100, 1) + " ha).", "ok");
+    logAudit("measure-area", fmt(km2, 3) + " km²");
+  }
+  areaPts = [];
+  areaMode = false;
+  $("btnArea").classList.remove("outline-accent");
+  $("map").style.cursor = "";
+}
+function gotoCoordinate() {
+  var v = window.prompt("Masukkan koordinat (lat, lon) dalam derajat desimal WGS84:\nContoh: 47.0096, 75.0403");
+  if (!v) return;
+  var m = v.split(/[,;\s]+/).filter(Boolean).map(Number);
+  if (m.length < 2 || !isFinite(m[0]) || !isFinite(m[1]) || Math.abs(m[0]) > 90 || Math.abs(m[1]) > 180) {
+    setStatus("Koordinat tidak valid. Format: lat, lon (derajat desimal).", "err"); return;
+  }
+  map.setView([m[0], m[1]], Math.max(map.getZoom(), 12));
+  L.circleMarker([m[0], m[1]], { radius: 8, color: "#cf4436", weight: 2, fillColor: "#cf4436", fillOpacity: 0.35 })
+    .addTo(map).bindPopup("lat " + fmt(m[0], 5) + ", lon " + fmt(m[1], 5)).openPopup();
+  setStatus("Zoom ke lat " + fmt(m[0], 5) + ", lon " + fmt(m[1], 5) + ".", "ok");
+}
+function saveMapPNG() {
+  if (!S.result) { setStatus("Hitung prospektivitas dulu.", "err"); return; }
+  try {
+    var img = renderScoreImage(1600);
+    var a = document.createElement("a");
+    a.href = img.dataURL; a.download = "peta_prospektivitas.png";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    logAudit("export", "Peta PNG");
+    setStatus("Peta skor disimpan sebagai PNG (" + img.w + "×" + img.h + " px). Basemap tidak disertakan.", "ok");
+  } catch (e) { setStatus("Gagal menyimpan PNG: " + e.message, "err"); }
+}
+
+/* ---------- attribute table (QGIS-style) ---------- */
+var _attrParam = null, _attrRows = [], _attrCols = [];
+function buildAttrRows(p) {
+  var cols = [], rows = [];
+  if (p.dataType === "points" && p.points && p.points.length) {
+    if (p.attrs && p.attrs.length) {
+      p.attrs.forEach(function (a) { Object.keys(a).forEach(function (k) { if (cols.indexOf(k) < 0) cols.push(k); }); });
+      rows = p.attrs.map(function (a, i) {
+        var r = {}; cols.forEach(function (c) { r[c] = a[c] == null ? "" : a[c]; });
+        r.__ll = [p.points[i][1], p.points[i][0]];
+        return r;
+      });
+    } else {
+      cols = ["lon", "lat", "nilai"];
+      rows = p.points.map(function (q) { return { lon: fmt(q[0], 5), lat: fmt(q[1], 5), nilai: q[2], __ll: [q[1], q[0]] }; });
+    }
+  } else if (p.features && p.features.length) {
+    p.features.forEach(function (f) { Object.keys(f.props || {}).forEach(function (k) { if (cols.indexOf(k) < 0) cols.push(k); }); });
+    if (!cols.length) cols = ["geometri"];
+    rows = p.features.map(function (f) {
+      var r = {};
+      cols.forEach(function (c) { r[c] = c === "geometri" ? f.geom.type : (f.props && f.props[c] != null ? f.props[c] : ""); });
+      var gm = f.geom;
+      var ll = gm.type === "Point" ? [gm.coords[1], gm.coords[0]]
+        : gm.type === "LineString" && gm.coords.length ? [gm.coords[0][1], gm.coords[0][0]]
+        : gm.type === "Polygon" && gm.rings[0] && gm.rings[0].length ? [gm.rings[0][0][1], gm.rings[0][0][0]] : null;
+      r.__ll = ll;
+      return r;
+    });
+  }
+  return { cols: cols, rows: rows };
+}
+function openAttrTable(p) {
+  var built = buildAttrRows(p);
+  if (!built.rows.length) { setStatus("Parameter '" + p.name + "' belum punya data untuk ditampilkan.", "err"); return; }
+  _attrParam = p; _attrCols = built.cols; _attrRows = built.rows;
+  $("attrTitle").textContent = "Tabel Atribut — " + p.name;
+  $("attrSearch").value = "";
+  renderAttrTable("");
+  $("attrModal").classList.add("on");
+  logAudit("attr-table", "buka tabel atribut '" + p.name + "' (" + built.rows.length + " baris)");
+}
+var ATTR_MAX_ROWS = 500;
+function renderAttrTable(q) {
+  q = (q || "").toLowerCase();
+  var filtered = !q ? _attrRows : _attrRows.filter(function (r) {
+    return _attrCols.some(function (c) { return String(r[c]).toLowerCase().indexOf(q) >= 0; });
+  });
+  var shown = filtered.slice(0, ATTR_MAX_ROWS);
+  var html = "<thead><tr>" + _attrCols.map(function (c) { return "<th>" + esc(c) + "</th>"; }).join("") + "</tr></thead><tbody>";
+  html += shown.map(function (r, i) {
+    return "<tr data-i='" + i + "'>" + _attrCols.map(function (c) { return "<td>" + esc(String(r[c])) + "</td>"; }).join("") + "</tr>";
+  }).join("");
+  html += "</tbody>";
+  $("attrTable").innerHTML = html;
+  $("attrInfo").textContent = fmtInt(filtered.length) + " baris" +
+    (filtered.length > ATTR_MAX_ROWS ? " · menampilkan " + ATTR_MAX_ROWS + " pertama" : "") + " · klik baris untuk zoom";
+  $("attrTable").querySelectorAll("tbody tr").forEach(function (tr) {
+    tr.addEventListener("click", function () {
+      var r = shown[Number(tr.dataset.i)];
+      if (r && r.__ll) { map.setView(r.__ll, Math.max(map.getZoom(), 13)); $("attrModal").classList.remove("on"); }
+    });
+  });
+}
+function exportAttrCsv() {
+  if (!_attrRows.length) return;
+  var lines = [_attrCols.join(",")];
+  _attrRows.forEach(function (r) {
+    lines.push(_attrCols.map(function (c) { return '"' + String(r[c]).replace(/"/g, '""') + '"'; }).join(","));
+  });
+  downloadText("atribut_" + (_attrParam ? _attrParam.name.replace(/\W+/g, "_") : "data") + ".csv", lines.join("\n"), "text/csv");
+  logAudit("export", "Tabel atribut CSV: " + (_attrParam ? _attrParam.name : ""));
 }
 
 function init() {
@@ -3500,6 +3942,34 @@ function init() {
   $("actExport").addEventListener("click", exportActivityCsv);
   $("actClear").addEventListener("click", clearActivity);
 
+  // QGIS-like tools
+  $("btnArea").addEventListener("click", function () { toggleArea(!areaMode); });
+  $("btnGoto").addEventListener("click", gotoCoordinate);
+  $("btnSaveMap").addEventListener("click", saveMapPNG);
+  $("attrClose").addEventListener("click", function () { $("attrModal").classList.remove("on"); });
+  $("attrModal").addEventListener("click", function (e) { if (e.target === $("attrModal")) $("attrModal").classList.remove("on"); });
+  $("attrSearch").addEventListener("input", function () { renderAttrTable($("attrSearch").value); });
+  $("attrCsv").addEventListener("click", exportAttrCsv);
+
+  // user management (admin)
+  $("btnUsers").addEventListener("click", function () { if (!requireAdmin()) return; renderUsers(); $("usrModal").classList.add("on"); });
+  $("usrClose").addEventListener("click", function () { $("usrModal").classList.remove("on"); });
+  $("usrModal").addEventListener("click", function (e) { if (e.target === $("usrModal")) $("usrModal").classList.remove("on"); });
+  $("usrAdd").addEventListener("click", addUser);
+  $("usrRows").addEventListener("click", onUsersClick);
+  $("newPass").addEventListener("keydown", function (e) { if (e.key === "Enter") addUser(); });
+
+  // session restore
+  $("btnRestoreYes").addEventListener("click", acceptRestore);
+  $("btnRestoreNo").addEventListener("click", discardRestore);
+
+  // mark session dirty on any meaningful change -> autosave picks it up
+  ["paramsList", "aoiWest", "aoiEast", "aoiSouth", "aoiNorth", "cellSize", "thRange", "minBlocks", "rankMetric", "combineMethod"].forEach(function (id) {
+    var el = $(id); if (!el) return;
+    el.addEventListener("change", markDirty);
+    el.addEventListener("input", markDirty);
+  });
+
   // project save / open
   $("projSave").addEventListener("click", function () { $("ddProject").open = false; exportProjectEncrypted(); });
   $("projOpen").addEventListener("click", function () { $("ddProject").open = false; $("projInput").click(); });
@@ -3507,7 +3977,12 @@ function init() {
     var f = e.target.files && e.target.files[0]; e.target.value = "";
     if (f) importProjectEncrypted(f);
   });
-  document.addEventListener("click", function (e) { var dd = $("ddProject"); if (dd.open && !dd.contains(e.target)) dd.open = false; });
+  document.addEventListener("mousedown", function (e) {
+    ["ddProject", "ddExport"].forEach(function (id) {
+      var dd = $(id);
+      if (dd && dd.open && !dd.contains(e.target)) dd.open = false;
+    });
+  });
 
   // reset inactivity timer on user activity
   ["mousemove", "keydown", "click", "wheel", "touchstart"].forEach(function (ev) {
@@ -3519,5 +3994,38 @@ function init() {
 }
 document.addEventListener("DOMContentLoaded", init);
 </script>
+
+<!-- ===== User management (admin) ===== -->
+<div id="usrModal" class="modal-wrap">
+  <div class="modal">
+    <div class="modal-head"><span>Manajemen Pengguna (Admin)</span><button class="btn ghost" id="usrClose">✕</button></div>
+    <div class="usr-form">
+      <div><label class="label">Nama pengguna</label><input class="input" id="newUser" placeholder="mis. geologist1" /></div>
+      <div><label class="label">Nama lengkap</label><input class="input" id="newName" placeholder="opsional" /></div>
+      <div><label class="label">Kata sandi (min 8)</label><input class="input" id="newPass" type="password" /></div>
+      <div><label class="label">Peran</label><select class="input" id="newRole"><option value="user">User</option><option value="admin">Admin</option></select></div>
+      <button class="btn accent" id="usrAdd">+ Tambah</button>
+    </div>
+    <div id="usrErr"></div>
+    <div class="modal-tools"><span id="usrInfo" class="hint"></span></div>
+    <div class="modal-body">
+      <table class="rank"><thead><tr><th>Pengguna</th><th>Nama</th><th>Peran</th><th style="text-align:right">Aksi</th></tr></thead>
+      <tbody id="usrRows"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Attribute table (QGIS-like) ===== -->
+<div id="attrModal" class="modal-wrap">
+  <div class="modal">
+    <div class="modal-head"><span id="attrTitle">Tabel Atribut</span><button class="btn ghost" id="attrClose">✕</button></div>
+    <div class="modal-tools">
+      <input class="input" id="attrSearch" placeholder="Cari di semua kolom…" style="max-width:260px" />
+      <span id="attrInfo" class="hint"></span><span class="spacer" style="flex:1"></span>
+      <button class="btn small" id="attrCsv">⭳ Ekspor CSV</button>
+    </div>
+    <div class="modal-body"><table class="attrtbl" id="attrTable"></table></div>
+  </div>
+</div>
 </body>
 </html>
